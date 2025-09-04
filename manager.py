@@ -52,7 +52,7 @@ def disable_mods():
         os.remove(CONFIG_FILE)
         messagebox.showinfo("Info", "Addons autoload disabled.")
     else:
-        messagebox.showinfo("Info", "No ringexec.cfg file to delete..")
+        messagebox.showinfo("Info", "No ringexec.cfg file to delete.")
 
 
 def move_addon(addon, source, dest):
@@ -145,5 +145,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
