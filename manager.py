@@ -7,18 +7,34 @@ import sys
 # Files and directories
 ADDONS_DIR = "addons"
 DISABLED_DIR = "addons_disabled"
-CONFIG_FILE = "ringexec.cfg"
-GAME_EXE = "ringracers.exe"
+CONFIG_FILE = {
+    "ringracers": "ringexec.cfg",
+    "srb2kart": "kartexec.cfg"
+}
+GAME_EXE = {
+    "ringracers": "ringracers.exe",
+    "srb2kart": "srb2kart.exe"
+}
 ICON_FILE = "icon.ico"
+GAME_TITLE = {
+    "ringracers": "Dr. Robotnik's Ring Racers",
+    "srb2kart": "Sonic Robo Blast 2 Kart"
+}
 
+CURRENT_GAME_ENV = None
 
 def check_environment():
-    if not os.path.exists(GAME_EXE):
-        messagebox.showerror("Error", f"{GAME_EXE} can't be found. Place the mod manager executable in the game root directory.")
+    global CURRENT_GAME_ENV
+    if os.path.exists(GAME_EXE["srb2kart"]):
+        CURRENT_GAME_ENV = "srb2kart"
+    elif os.path.exists(GAME_EXE["ringracers"]):
+        CURRENT_GAME_ENV = "ringracers"
+    else:
+        messagebox.showerror("Error", f"{GAME_EXE['srb2kart']} or {GAME_EXE['ringracers']} can't be found. Please place the mod manager executable in the root directory of one of these games.")
         sys.exit(1)
+
     if not os.path.exists(ADDONS_DIR):
-        messagebox.showerror("Error", f"Folder '{ADDONS_DIR}' can't be found. Be sure that the manager executable located in the game root directory.")
-        sys.exit(1)
+        os.makedirs(ADDONS_DIR)
     if not os.path.exists(DISABLED_DIR):
         os.makedirs(DISABLED_DIR)
 
@@ -36,7 +52,7 @@ def scan_addons():
 
 
 def write_config(active_addons):
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+    with open(CONFIG_FILE[CURRENT_GAME_ENV], "w", encoding="utf-8") as f:
         for addon in active_addons:
             f.write(f"addfile addons\\{addon}\n")
 
@@ -48,11 +64,11 @@ def update_config():
 
 
 def disable_mods():
-    if os.path.exists(CONFIG_FILE):
-        os.remove(CONFIG_FILE)
+    if os.path.exists(CONFIG_FILE[CURRENT_GAME_ENV]):
+        os.remove(CONFIG_FILE[CURRENT_GAME_ENV])
         messagebox.showinfo("Info", "Addons autoload disabled.")
     else:
-        messagebox.showinfo("Info", "No ringexec.cfg file to delete.")
+        messagebox.showinfo("Info", f"No {CONFIG_FILE[CURRENT_GAME_ENV]} file to delete.")
 
 
 def move_addon(addon, source, dest):
@@ -96,9 +112,13 @@ def main():
 
     check_environment()
 
+    if (None == CURRENT_GAME_ENV):
+        messagebox.showerror("Error", "Couldn't define game environment.")
+        sys.exit(1)
+
     # Define tkinter interface
     root = tk.Tk()
-    root.title("Dr. Robotnik's Ring Racers addons manager")
+    root.title(f"{GAME_TITLE[CURRENT_GAME_ENV]} Addons Manager")
 
     # Define an app icon if possible
     if os.path.exists(ICON_FILE):
@@ -145,6 +165,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
