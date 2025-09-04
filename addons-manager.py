@@ -108,6 +108,12 @@ def enable_addon():
         addon = listbox_inactive.get(selection[0])
         move_addon(addon, DISABLED_DIR, ADDONS_DIR)
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 def main():
     global root, listbox_active, listbox_inactive
@@ -122,10 +128,12 @@ def main():
     root = tk.Tk()
     root.title(f"{GAME_TITLE[CURRENT_GAME_ENV]} Addons Manager v{APP_VERSION}")
 
+
     # Define an app icon if possible
-    if os.path.exists(ICON_FILE):
+    ICON_PATH = resource_path(ICON_FILE)
+    if os.path.exists(ICON_PATH):
         try:
-            root.iconbitmap(ICON_FILE)
+            root.iconbitmap(ICON_PATH)
         except Exception:
             messagebox.showwarning("Warning", "Can't load custom icon.")
 
