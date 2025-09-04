@@ -1,9 +1,9 @@
 [project]
 name = "dr-robotnik-ring-racers-addons-manager"
 version = "1.1"
-description = "Ring racers/SRB2Kart Addons Manager"
+description = "Ring Racers/SRB2Kart Addons Manager"
 authors = [
-    { name="Ton Nom", email="ton.email@example.com" }
+    { name="Sanghelyos", email="https://github.com/Sanghelyos" }
 ]
 
 requires-python = ">=3.10.5"
