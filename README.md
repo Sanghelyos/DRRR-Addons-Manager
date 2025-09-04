@@ -4,9 +4,7 @@ A tool to enable or disable addons and especially, make them autoloadable so you
 
 Latest version [download](https://github.com/Sanghelyos/dr-robotnik-ring-racers-addons-manager/releases/latest)
 
-Built with Pyinstaller
-
-Command: `pyinstaller --onefile --noconsole --icon=icon.ico --add-data "icon.ico;." addons-manager.py`
+Build command: `python build.py`
 
 Requirements:
 Python 3.10.5
