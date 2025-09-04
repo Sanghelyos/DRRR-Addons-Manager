@@ -27,7 +27,7 @@ def scan_addons():
     active = set(os.listdir(ADDONS_DIR)) if os.path.exists(ADDONS_DIR) else set()
     inactive = set(os.listdir(DISABLED_DIR)) if os.path.exists(DISABLED_DIR) else set()
 
-    # Vérifier doublons
+    # Check for duplicates
     duplicates = active & inactive
     if duplicates:
         messagebox.showerror("Error", f"Duplicates found in both addons and addons_disabled folders: {duplicates}")
@@ -94,14 +94,13 @@ def enable_addon():
 def main():
     global root, listbox_active, listbox_inactive
 
-    # Vérification de l'environnement
     check_environment()
 
-    # Interface Tkinter
+    # Define tkinter interface
     root = tk.Tk()
     root.title("Dr. Robotnik's Ring Racers addons manager")
 
-    # Définir une icône personnalisée si disponible
+    # Define an app icon if possible
     if os.path.exists(ICON_FILE):
         try:
             root.iconbitmap(ICON_FILE)
@@ -126,7 +125,7 @@ def main():
     listbox_active.grid(row=0, column=0, padx=5, pady=5)
     listbox_inactive.grid(row=0, column=2, padx=5, pady=5)
 
-    # Boutons pour déplacer
+    # Button to move addons from addons or addons_disabled folders
     buttons_frame = tk.Frame(lists_frame)
     buttons_frame.grid(row=0, column=1, padx=5)
 
@@ -146,3 +145,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
