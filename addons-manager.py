@@ -4,6 +4,8 @@ import tkinter as tk
 from tkinter import messagebox
 import sys
 
+APP_VERSION = "1.1"
+
 # Files and directories
 ADDONS_DIR = "addons"
 DISABLED_DIR = "addons_disabled"
@@ -118,7 +120,7 @@ def main():
 
     # Define tkinter interface
     root = tk.Tk()
-    root.title(f"{GAME_TITLE[CURRENT_GAME_ENV]} Addons Manager")
+    root.title(f"{GAME_TITLE[CURRENT_GAME_ENV]} Addons Manager v{APP_VERSION}")
 
     # Define an app icon if possible
     if os.path.exists(ICON_FILE):
