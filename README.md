@@ -10,8 +10,6 @@ Requirements:
 Python 3.10.5
 PyInstaller 6.15.0
 
-All code dependencies are shipped with default Python
-
 # How to use
 - Place the manager executable in the game root folder and execute it.
 - All the files from your addons folder should appear in the left column. A folder will be created if it doesn't exists.
