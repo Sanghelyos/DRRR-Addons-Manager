@@ -6,9 +6,9 @@ Latest version [download](https://github.com/Sanghelyos/dr-robotnik-ring-racers-
 
 Build command: `python build.py`
 
-Requirements:
-Python 3.10.5
-PyInstaller 6.15.0
+### Requirements
+- Python 3.10.5
+- PyInstaller 6.15.0
 
 # How to use
 - Place the manager executable in the game root folder and execute it.
