@@ -5,11 +5,12 @@ from tkinter import messagebox
 import sys
 from pathlib import Path
 from game import Game
+import json
 
 APP_VERSION = "1.2"
 
 # MAKE USE OF DEV ENVIRONMENT
-DEV_MODE = os.getenv("DEV_MODE", "true").lower() == "true"
+DEV_MODE = True
 
 # Game directory
 BASE_DIR = Path(__file__).resolve().parent
