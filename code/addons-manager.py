@@ -1,20 +1,24 @@
-import os
 import shutil
 import tkinter as tk
 from tkinter import messagebox
 import sys
 from pathlib import Path
 from game import Game
-import json
 
 APP_VERSION = "1.2"
 
 # MAKE USE OF DEV ENVIRONMENT
-DEV_MODE = True
+DEV_MODE = False
 
 # Game directory
-BASE_DIR = Path(__file__).resolve().parent
-GAME_DIR = BASE_DIR / "../game_dev_directory" if DEV_MODE else BASE_DIR
+if getattr(sys, 'frozen', False):
+    # PyInstaller exe
+    BASE_DIR = Path(sys.executable).parent
+else:
+    # Python script, usually DEV
+    BASE_DIR = Path(__file__).resolve().parent
+
+GAME_DIR = BASE_DIR.parent / "game_dev_directory" if DEV_MODE else BASE_DIR
 
 GAMES = {
     "ringracers": Game(
@@ -27,21 +31,22 @@ GAMES = {
 
 ADDONS_DIR = GAME_DIR / "addons"
 DISABLED_DIR = GAME_DIR / "addons_disabled"
-ICON_FILE = BASE_DIR / "../assets/icon.ico" if DEV_MODE else GAME_DIR / "assets/icon.ico"
+ICON_FILE = BASE_DIR.parent / "/assets/icon.ico" if DEV_MODE else GAME_DIR / "assets/icon.ico"
 
 CURRENT_GAME = None
 
 
 def check_environment() -> None:
     global CURRENT_GAME
-    if GAMES["srb2kart"].exe_path.exists():
-        CURRENT_GAME = GAMES["srb2kart"]
-    elif GAMES["ringracers"].exe_path.exists():
-        CURRENT_GAME = GAMES["ringracers"]
-    else:
+    for game in GAMES.values():
+        if game.exe_path.exists():
+            CURRENT_GAME = game
+            break
+        
+    if CURRENT_GAME is None:
         messagebox.showerror(
             "Error",
-            f'{GAMES["srb2kart"].exe_name} or {GAMES["ringracers"].exe_name} can\'t be found. Please place the mod manager executable in the root directory of one of these games.',
+            f"Neither ringracers.exe nor srb2kart.exe found. Place the manager in the same folder as the game."
         )
         sys.exit(1)
 
