@@ -4,6 +4,7 @@ A tool to enable or disable addons and especially, make them autoloadable so you
 
 Latest version [download](https://github.com/Sanghelyos/dr-robotnik-ring-racers-addons-manager/releases/latest)
 
+Dependencies installation command: `pip install .` in the project directory
 Build command: `python build.py`
 
 ### Requirements
