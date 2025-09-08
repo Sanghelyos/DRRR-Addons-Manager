@@ -1,6 +1,6 @@
 [project]
 name = "dr-robotnik-ring-racers-addons-manager"
-version = "1.1"
+version = "1.2"
 description = "Ring Racers/SRB2Kart Addons Manager"
 authors = [
     { name="Sanghelyos", url="https://github.com/Sanghelyos" }
