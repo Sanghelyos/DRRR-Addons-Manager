@@ -8,7 +8,7 @@ from game import Game
 APP_VERSION = "1.2"
 
 # MAKE USE OF DEV ENVIRONMENT
-DEV_MODE = False
+DEV_MODE = True
 
 # Game directory
 if getattr(sys, 'frozen', False):
