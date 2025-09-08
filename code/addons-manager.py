@@ -7,31 +7,26 @@ from game import Game
 
 APP_VERSION = "1.2"
 
-# MAKE USE OF DEV ENVIRONMENT
-DEV_MODE = True
-
 # Game directory
 if getattr(sys, 'frozen', False):
     # PyInstaller exe
     BASE_DIR = Path(sys.executable).parent
 else:
     # Python script, usually DEV
-    BASE_DIR = Path(__file__).resolve().parent
-
-GAME_DIR = BASE_DIR.parent / "game_dev_directory" if DEV_MODE else BASE_DIR
+    BASE_DIR = Path(__file__).resolve().parent.parent / "game_dev_directory"
 
 GAMES = {
     "ringracers": Game(
-        "ringracers.exe", "ringexec.cfg", "Dr. Robotnik's Ring Racers", GAME_DIR
+        "ringracers.exe", "ringexec.cfg", "Dr. Robotnik's Ring Racers", BASE_DIR
     ),
     "srb2kart": Game(
-        "srb2kart.exe", "kartexec.cfg", "Sonic Robo Blast 2 Kart", GAME_DIR
+        "srb2kart.exe", "kartexec.cfg", "Sonic Robo Blast 2 Kart", BASE_DIR
     ),
 }
 
-ADDONS_DIR = GAME_DIR / "addons"
-DISABLED_DIR = GAME_DIR / "addons_disabled"
-ICON_FILE = BASE_DIR.parent / "/assets/icon.ico" if DEV_MODE else GAME_DIR / "assets/icon.ico"
+ADDONS_DIR = BASE_DIR / "addons"
+DISABLED_DIR = BASE_DIR / "addons_disabled"
+ICON_FILE = Path("assets/icon.ico")
 
 CURRENT_GAME = None
 
@@ -139,8 +134,8 @@ def resource_path(relative_path: Path) -> Path:
     try:
         base_path = Path(sys._MEIPASS)
     except AttributeError:
-        base_path = BASE_DIR
-    
+        base_path = Path(__file__).resolve().parent.parent
+        
     return base_path / relative_path
 
 
