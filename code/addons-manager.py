@@ -26,7 +26,7 @@ GAMES = {
 
 ADDONS_DIR = GAME_DIR / "addons"
 DISABLED_DIR = GAME_DIR / "addons_disabled"
-ICON_FILE = GAME_DIR / "icon.ico"
+ICON_FILE = BASE_DIR / "../assets/icon.ico" if DEV_MODE else GAME_DIR / "assets/icon.ico"
 
 CURRENT_GAME = None
 
@@ -134,7 +134,7 @@ def resource_path(relative_path: Path) -> Path:
         base_path = Path(sys._MEIPASS)
     except AttributeError:
         base_path = BASE_DIR
-
+    
     return base_path / relative_path
 
 
@@ -153,6 +153,7 @@ def main() -> None:
 
     # Define an app icon if possible
     ICON_PATH = resource_path(ICON_FILE)
+    print(ICON_PATH)
     if ICON_PATH.exists():
         try:
             root.iconbitmap(str(ICON_PATH))  # Tkinter wants str not Path
