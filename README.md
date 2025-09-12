@@ -5,6 +5,7 @@ Also provides a save backup creation
 
 Latest version [download](https://github.com/Sanghelyos/dr-robotnik-ring-racers-addons-manager/releases/latest)
 
+### Build from source
 - Dependencies installation command: `pip install .` in the project directory
 - Build command: `python build.py`
 
