@@ -6,7 +6,7 @@ from pathlib import Path
 from game import Game
 from datetime import datetime
 
-APP_VERSION = "1.2"
+APP_VERSION = "1.2.1"
 
 # Game directory
 if getattr(sys, "frozen", False):
@@ -18,10 +18,18 @@ else:
 
 GAMES = {
     "ringracers": Game(
-        "ringracers.exe", "ringexec.cfg", "Dr. Robotnik's Ring Racers", BASE_DIR
+        "ringracers.exe",
+        "ringexec.cfg",
+        "Dr. Robotnik's Ring Racers",
+        ["ringdata.dat", "ringprofiles.prf"],
+        BASE_DIR,
     ),
     "srb2kart": Game(
-        "srb2kart.exe", "kartexec.cfg", "Sonic Robo Blast 2 Kart", BASE_DIR
+        "srb2kart.exe",
+        "kartexec.cfg",
+        "Sonic Robo Blast 2 Kart",
+        ["kartdata.dat"],
+        BASE_DIR,
     ),
 }
 
@@ -29,8 +37,6 @@ ADDONS_DIR = BASE_DIR / "addons"
 DISABLED_DIR = BASE_DIR / "addons_disabled"
 SAVE_BACKUPS_DIR = BASE_DIR / "save_backups"
 ICON_FILE = Path("assets/icon.ico")
-
-SAVE_FILES = ["ringdata.dat", "ringprofiles.prf"]
 
 CURRENT_GAME = None
 
@@ -124,7 +130,7 @@ def backup_save() -> None:
     if not backup_path.exists():
         backup_path.mkdir()
 
-    for save_file in SAVE_FILES:
+    for save_file in CURRENT_GAME.save_files:
         try:
             shutil.copy(BASE_DIR / save_file, backup_path / save_file)
         except:
