@@ -4,11 +4,12 @@ from tkinter import messagebox
 import sys
 from pathlib import Path
 from game import Game
+from datetime import datetime
 
 APP_VERSION = "1.2"
 
 # Game directory
-if getattr(sys, 'frozen', False):
+if getattr(sys, "frozen", False):
     # PyInstaller exe
     BASE_DIR = Path(sys.executable).parent
 else:
@@ -26,7 +27,10 @@ GAMES = {
 
 ADDONS_DIR = BASE_DIR / "addons"
 DISABLED_DIR = BASE_DIR / "addons_disabled"
+SAVE_BACKUPS_DIR = BASE_DIR / "save_backups"
 ICON_FILE = Path("assets/icon.ico")
+
+SAVE_FILES = ["ringdata.dat", "ringprofiles.prf"]
 
 CURRENT_GAME = None
 
@@ -37,11 +41,11 @@ def check_environment() -> None:
         if game.exe_path.exists():
             CURRENT_GAME = game
             break
-        
+
     if CURRENT_GAME is None:
         messagebox.showerror(
             "Error",
-            f"Neither ringracers.exe nor srb2kart.exe found. Place the manager in the same folder as the game."
+            f"Neither ringracers.exe nor srb2kart.exe found. Place the manager in the same folder as the game.",
         )
         sys.exit(1)
 
@@ -49,6 +53,8 @@ def check_environment() -> None:
         ADDONS_DIR.mkdir(parents=True, exist_ok=True)
     if not DISABLED_DIR.exists():
         DISABLED_DIR.mkdir(parents=True, exist_ok=True)
+    if not SAVE_BACKUPS_DIR.exists():
+        SAVE_BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def scan_addons() -> None:
@@ -104,6 +110,30 @@ def move_addon(addon: str, source: Path, dest: Path) -> None:
         messagebox.showerror("Error", f"Cannot move {addon}!")
 
 
+def backup_save() -> None:
+    current_datetime = datetime.now()
+    year = current_datetime.year
+    month = current_datetime.month
+    day = current_datetime.day
+    hour = current_datetime.hour
+    minutes = current_datetime.minute
+    seconds = current_datetime.second
+
+    backup_path = SAVE_BACKUPS_DIR / f"{year}-{month}-{day} {hour}-{minutes}-{seconds}"
+
+    if not backup_path.exists():
+        backup_path.mkdir()
+
+    for save_file in SAVE_FILES:
+        try:
+            shutil.copy(BASE_DIR / save_file, backup_path / save_file)
+        except:
+            messagebox.showerror("Error", f"Couldn't make a backup of {save_file}!")
+            return
+
+    messagebox.showinfo("Info", "Backup created successfully!")
+
+
 def refresh_lists() -> None:
     active, inactive = scan_addons()
 
@@ -135,7 +165,7 @@ def resource_path(relative_path: Path) -> Path:
         base_path = Path(sys._MEIPASS)
     except AttributeError:
         base_path = Path(__file__).resolve().parent.parent
-        
+
     return base_path / relative_path
 
 
@@ -164,8 +194,11 @@ def main() -> None:
     frame = tk.Frame(root, padx=10, pady=10)
     frame.pack(fill="both", expand=True)
 
+    addons_manager_label = tk.Label(frame, text="Addons Manager")
+    addons_manager_label.pack()
+
     btn_scan = tk.Button(frame, text="Enable/Update autoloader", command=update_config)
-    btn_scan.pack(pady=5)
+    btn_scan.pack(pady=15)
 
     btn_disable_mods = tk.Button(frame, text="Disable autoloader", command=disable_mods)
     btn_disable_mods.pack(pady=5)
@@ -197,6 +230,15 @@ def main() -> None:
 
     btn_refresh = tk.Button(frame, text="Refresh list", command=refresh_lists)
     btn_refresh.pack(pady=5)
+
+    misc_label = tk.Label(frame, text="Miscellaneous")
+    misc_label.pack()
+
+    misc_frame = tk.Frame(frame)
+    misc_frame.pack()
+
+    btn_backup_save = tk.Button(misc_frame, text="Backup Save", command=backup_save)
+    btn_backup_save.grid(row=0, column=0, pady=15)
 
     refresh_lists()
 
