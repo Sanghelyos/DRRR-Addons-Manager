@@ -1,12 +1,11 @@
 import subprocess
-import os
 
 cmd = [
     "pyinstaller",
     "--onefile",
     "--noconsole",
     "--icon=assets/icon.ico",
-    "--add-data", "assets/icon.ico;.",
+    "--add-data", "assets/icon.ico;assets",
     "code/addons-manager.py",
 ]
 

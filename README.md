@@ -1,6 +1,7 @@
 # Dr. Robotnik's Ring Racers Addons Manager
 ## Now works with Sonic Robo Blast 2 Kart too!!
 A tool to enable or disable addons and especially, make them autoloadable so you don't have to generate an autoload list manually.
+Also provides a save backup creation
 
 Latest version [download](https://github.com/Sanghelyos/dr-robotnik-ring-racers-addons-manager/releases/latest)
 
