@@ -1,20 +1,24 @@
-import shutil
 import tkinter as tk
 from tkinter import messagebox
+from functools import partial
 import sys
 from pathlib import Path
+
 from game import Game
-from datetime import datetime
+from file_utils import *
 
-APP_VERSION = "1.2.1"
+APP_VERSION = "1.2.2"
 
-# Game directory
-if getattr(sys, "frozen", False):
-    # PyInstaller exe
-    BASE_DIR = Path(sys.executable).parent
-else:
-    # Python script, usually DEV
-    BASE_DIR = Path(__file__).resolve().parent.parent / "game_dev_directory"
+# Directories
+BASE_DIR = (
+    Path(sys.executable).parent
+    if getattr(sys, "frozen", False)
+    else Path(__file__).resolve().parent.parent / "game_dev_directory"
+)
+ADDONS_DIR = BASE_DIR / "addons"
+DISABLED_DIR = BASE_DIR / "addons_disabled"
+SAVE_BACKUPS_DIR = BASE_DIR / "save_backups"
+ICON_FILE = Path("assets/icon.ico")
 
 GAMES = {
     "ringracers": Game(
@@ -33,15 +37,13 @@ GAMES = {
     ),
 }
 
-ADDONS_DIR = BASE_DIR / "addons"
-DISABLED_DIR = BASE_DIR / "addons_disabled"
-SAVE_BACKUPS_DIR = BASE_DIR / "save_backups"
-ICON_FILE = Path("assets/icon.ico")
+CURRENT_GAME: Game | None = None
 
-CURRENT_GAME = None
+# ------------------ Environment ------------------
 
 
 def check_environment() -> None:
+    """Find current game and ensure required folders exist."""
     global CURRENT_GAME
     for game in GAMES.values():
         if game.exe_path.exists():
@@ -51,97 +53,21 @@ def check_environment() -> None:
     if CURRENT_GAME is None:
         messagebox.showerror(
             "Error",
-            f"Neither ringracers.exe nor srb2kart.exe found. Place the manager in the same folder as the game.",
+            "Neither ringracers.exe nor srb2kart.exe found. Place the manager in the game folder.",
         )
         sys.exit(1)
 
-    if not ADDONS_DIR.exists():
-        ADDONS_DIR.mkdir(parents=True, exist_ok=True)
-    if not DISABLED_DIR.exists():
-        DISABLED_DIR.mkdir(parents=True, exist_ok=True)
-    if not SAVE_BACKUPS_DIR.exists():
-        SAVE_BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+    for folder in [ADDONS_DIR, DISABLED_DIR, SAVE_BACKUPS_DIR]:
+        folder.mkdir(parents=True, exist_ok=True)
 
 
-def scan_addons() -> None:
-    active = (
-        set(f.name for f in ADDONS_DIR.iterdir() if f.is_file())
-        if ADDONS_DIR.exists()
-        else set()
-    )
-    inactive = (
-        set(f.name for f in DISABLED_DIR.iterdir() if f.is_file())
-        if DISABLED_DIR.exists()
-        else set()
-    )
-
-    # Check for duplicates
-    duplicates = active & inactive
-    if duplicates:
-        messagebox.showerror(
-            "Error",
-            f"Duplicates found in both addons and addons_disabled folders: {', '.join(duplicates)}",
-        )
-
-    return list(active), list(inactive)
-
-
-def write_config(active_addons: list) -> None:
-    with CURRENT_GAME.config_path.open("w", encoding="utf-8") as f:
-        for addon in active_addons:
-            f.write(f"addfile addons\\{addon}\n")
-
-
-def update_config() -> None:
-    active, _ = scan_addons()
-    write_config(active)
-    messagebox.showinfo("Success", f"Enabled autoload for {len(active)} addons.")
-
-
-def disable_mods() -> None:
-    if Path.exists(CURRENT_GAME.config_path):
-        CURRENT_GAME.config_path.unlink()
-        messagebox.showinfo("Info", "Addons autoload disabled.")
-    else:
-        messagebox.showinfo("Info", f"No {CURRENT_GAME.config_name} file to delete.")
-
-
-def move_addon(addon: str, source: Path, dest: Path) -> None:
-    src_path = source / addon
-    dest_path = dest / addon
-    if src_path.exists():
-        shutil.move(str(src_path), str(dest_path))
-        refresh_lists()
-    else:
-        messagebox.showerror("Error", f"Cannot move {addon}!")
-
-
-def backup_save() -> None:
-    current_datetime = datetime.now()
-    year = current_datetime.year
-    month = current_datetime.month
-    day = current_datetime.day
-    hour = current_datetime.hour
-    minutes = current_datetime.minute
-    seconds = current_datetime.second
-
-    backup_path = SAVE_BACKUPS_DIR / f"{year}-{month}-{day} {hour}-{minutes}-{seconds}"
-
-    if not backup_path.exists():
-        backup_path.mkdir()
-
-    for save_file in CURRENT_GAME.save_files:
-        try:
-            shutil.copy(BASE_DIR / save_file, backup_path / save_file)
-        except:
-            messagebox.showerror("Error", f"Couldn't make a backup of {save_file}!")
-            return
-
-    messagebox.showinfo("Info", "Backup created successfully!")
+# ------------------ GUI Logic ------------------
 
 
 def refresh_lists() -> None:
-    active, inactive = scan_addons()
+    active, inactive, duplicates = scan_addons(ADDONS_DIR, DISABLED_DIR)
+    if duplicates:
+        messagebox.showerror("Error", f"Duplicates found: {', '.join(duplicates)}")
 
     listbox_active.delete(0, tk.END)
     listbox_inactive.delete(0, tk.END)
@@ -153,26 +79,26 @@ def refresh_lists() -> None:
 
 
 def disable_addon() -> None:
-    selection = listbox_active.curselection()
-    if selection:
-        addon = listbox_active.get(selection[0])
-        move_addon(addon, ADDONS_DIR, DISABLED_DIR)
+    sel = listbox_active.curselection()
+    if sel:
+        move_addon(listbox_active.get(sel[0]), ADDONS_DIR, DISABLED_DIR)
+        refresh_lists()
 
 
 def enable_addon() -> None:
-    selection = listbox_inactive.curselection()
-    if selection:
-        addon = listbox_inactive.get(selection[0])
-        move_addon(addon, DISABLED_DIR, ADDONS_DIR)
+    sel = listbox_inactive.curselection()
+    if sel:
+        move_addon(listbox_inactive.get(sel[0]), DISABLED_DIR, ADDONS_DIR)
+        refresh_lists()
 
 
-def resource_path(relative_path: Path) -> Path:
-    try:
-        base_path = Path(sys._MEIPASS)
-    except AttributeError:
-        base_path = Path(__file__).resolve().parent.parent
+def update_config_wrapper() -> None:
+    active, _, _ = scan_addons(ADDONS_DIR, DISABLED_DIR)
+    write_config(CURRENT_GAME, active)
+    messagebox.showinfo("Success", f"Enabled autoload for {len(active)} addons.")
 
-    return base_path / relative_path
+
+# ------------------ Main ------------------
 
 
 def main() -> None:
@@ -180,34 +106,27 @@ def main() -> None:
 
     check_environment()
 
-    if None == CURRENT_GAME:
-        messagebox.showerror("Error", "Couldn't define game environment.")
-        sys.exit(1)
-
-    # Define tkinter interface
     root = tk.Tk()
     root.title(f"{CURRENT_GAME.title} Addons Manager v{APP_VERSION}")
 
-    # Define an app icon if possible
-    ICON_PATH = resource_path(ICON_FILE)
-    print(ICON_PATH)
-    if ICON_PATH.exists():
+    icon_path = resource_path(ICON_FILE)
+    if icon_path.exists():
         try:
-            root.iconbitmap(str(ICON_PATH))  # Tkinter wants str not Path
+            root.iconbitmap(str(icon_path))
         except Exception:
             messagebox.showwarning("Warning", "Can't load custom icon.")
 
     frame = tk.Frame(root, padx=10, pady=10)
     frame.pack(fill="both", expand=True)
 
-    addons_manager_label = tk.Label(frame, text="Addons Manager")
-    addons_manager_label.pack()
+    tk.Label(frame, text="Addons Manager").pack()
 
-    btn_scan = tk.Button(frame, text="Enable/Update autoloader", command=update_config)
-    btn_scan.pack(pady=15)
-
-    btn_disable_mods = tk.Button(frame, text="Disable autoloader", command=disable_mods)
-    btn_disable_mods.pack(pady=5)
+    tk.Button(
+        frame, text="Enable/Update autoloader", command=update_config_wrapper
+    ).pack(pady=15)
+    tk.Button(
+        frame, text="Disable autoloader", command=partial(disable_mods, CURRENT_GAME)
+    ).pack(pady=5)
 
     lists_frame = tk.Frame(frame)
     lists_frame.pack()
@@ -216,38 +135,22 @@ def main() -> None:
     listbox_inactive = tk.Listbox(
         lists_frame, width=50, height=15, selectmode=tk.SINGLE
     )
-
     listbox_active.grid(row=0, column=0, padx=5, pady=5)
     listbox_inactive.grid(row=0, column=2, padx=5, pady=5)
 
-    # Button to move addons from addons or addons_disabled folders
-    buttons_frame = tk.Frame(lists_frame)
-    buttons_frame.grid(row=0, column=1, padx=5)
+    btn_frame = tk.Frame(lists_frame)
+    btn_frame.grid(row=0, column=1, padx=5)
+    tk.Button(btn_frame, text="→ Disable", command=disable_addon).pack(pady=10)
+    tk.Button(btn_frame, text="← Enable", command=enable_addon).pack(pady=10)
 
-    btn_disable = tk.Button(
-        buttons_frame, text="→ Disable", command=lambda: disable_addon()
-    )
-    btn_enable = tk.Button(
-        buttons_frame, text="← Enable", command=lambda: enable_addon()
-    )
-
-    btn_disable.pack(pady=10)
-    btn_enable.pack(pady=10)
-
-    btn_refresh = tk.Button(frame, text="Refresh list", command=refresh_lists)
-    btn_refresh.pack(pady=5)
-
-    misc_label = tk.Label(frame, text="Miscellaneous")
-    misc_label.pack()
-
-    misc_frame = tk.Frame(frame)
-    misc_frame.pack()
-
-    btn_backup_save = tk.Button(misc_frame, text="Backup Save", command=backup_save)
-    btn_backup_save.grid(row=0, column=0, pady=15)
+    tk.Button(frame, text="Refresh list", command=refresh_lists).pack(pady=5)
+    tk.Button(
+        frame,
+        text="Backup Save",
+        command=partial(backup_save, CURRENT_GAME, SAVE_BACKUPS_DIR),
+    ).pack(pady=15)
 
     refresh_lists()
-
     root.mainloop()
 
 

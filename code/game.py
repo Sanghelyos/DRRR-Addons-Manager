@@ -8,12 +8,12 @@ class Game:
     config_name: str
     title: str
     save_files: list
-    game_dir: Path
+    dir: Path
 
     @property
     def exe_path(self) -> Path:
-        return self.game_dir / self.exe_name
+        return self.dir / self.exe_name
 
     @property
     def config_path(self) -> Path:
-        return self.game_dir / self.config_name
+        return self.dir / self.config_name
