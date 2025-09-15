@@ -21,7 +21,7 @@ GAMES = {
         "ringracers.exe",
         "ringexec.cfg",
         "Dr. Robotnik's Ring Racers",
-        ["ringdata.dat", "ringprofiles.prf"],
+        ["ringdata.dat", "ringprofiles.prf", "srvstats.dat"],
         BASE_DIR,
     ),
     "srb2kart": Game(
