@@ -1,9 +1,7 @@
-addons-manager.spec
-dr_robotnik_ring_racers_addons_manager.egg-info
+sanghelyos-toolbox.spec
+DRRR-Toolbox.egg-info
 /build/
 /dist/
 /game_dev_directory/addons/*
 /game_dev_directory/addons_disabled/*
-/game_dev_directory/ringdata.dat
-/game_dev_directory/ringprofiles.prf
 /code/__pycache__/

@@ -6,7 +6,7 @@ cmd = [
     "--noconsole",
     "--icon=assets/icon.ico",
     "--add-data", "assets/icon.ico;assets",
-    "code/addons-manager.py",
+    "code/sanghelyos-toolbox.py",
 ]
 
 subprocess.run(cmd, check=True)

@@ -47,7 +47,6 @@ def backup_save(current_game: Game, save_backup_dir: Path) -> None:
             shutil.copy(src, dst)
         except Exception:
             messagebox.showerror("Error", f"Couldn't backup {save_file}!")
-
             return
 
     messagebox.showinfo("Info", "Backup created successfully!")
@@ -59,8 +58,21 @@ def resource_path(relative_path: Path) -> Path:
         base_path = Path(sys._MEIPASS)
     except AttributeError:
         base_path = Path(__file__).resolve().parent.parent
-
     return base_path / relative_path
+
+
+def get_file_version(path: Path) -> Optional[str]:
+    """Extract the FileVersion from a Windows executable."""
+    pe = pefile.PE(path)
+    for fileinfo in getattr(pe, "FileInfo", []) or []:
+        items = fileinfo if isinstance(fileinfo, list) else [fileinfo]
+        for fi in items:
+            if getattr(fi, "Key", None) == b"StringFileInfo":
+                for st in getattr(fi, "StringTable", []) or []:
+                    ver = st.entries.get(b"FileVersion")
+                    if ver:
+                        return ver.decode(errors="ignore")
+    return None
 
 
 def scan_addons(
@@ -78,5 +90,4 @@ def scan_addons(
         else []
     )
     duplicates = list(set(active) & set(inactive))
-
     return active, inactive, duplicates
