@@ -18,12 +18,13 @@ BASE_DIR = (
     else Path(__file__).resolve().parent.parent / "game_dev_directory"
 )
 ADDONS_DIR = BASE_DIR / "addons"
-DISABLED_DIR = BASE_DIR / "addons_disabled"
+ADDONS_ENABLED_LIST = ADDONS_DIR / "enabled.txt"
 SAVE_BACKUPS_DIR = BASE_DIR / "save_backups"
 ICON_FILE = Path("assets/icon.ico")
 
 GAMES = {
     "ringracers": Game(
+        "ringracers",
         "ringracers.exe",
         "ringexec.cfg",
         "Dr. Robotnik's Ring Racers",
@@ -34,6 +35,7 @@ GAMES = {
         "RingRacers",
     ),
     "srb2kart": Game(
+        "srb2kart",
         "srb2kart.exe",
         "kartexec.cfg",
         "Sonic Robo Blast 2 Kart",
@@ -65,8 +67,9 @@ def check_environment() -> None:
         )
         sys.exit(1)
 
-    for folder in [ADDONS_DIR, DISABLED_DIR, SAVE_BACKUPS_DIR]:
+    for folder in [ADDONS_DIR, SAVE_BACKUPS_DIR]:
         folder.mkdir(parents=True, exist_ok=True)
+    ADDONS_ENABLED_LIST.touch(exist_ok=True)
 
     CURRENT_GAME.version = get_file_version(CURRENT_GAME.exe_path)
 
@@ -76,14 +79,36 @@ def check_environment() -> None:
         )
         exit(1)
 
+    if CURRENT_GAME.key in ["srb2kart"]:
+        CURRENT_GAME.version = "Undefined"
+
 
 # ------------------ GUI Logic ------------------
 
 
+def enable_autoloader() -> None:
+    """Creates the game's config file to enable autoload."""
+    if CURRENT_GAME.config_path.exists():
+        messagebox.showinfo("Info", "Autoloader already enabled!")
+
+        return
+
+    update_config_file()
+
+    messagebox.showinfo("Success", f"Enabled autoload.")
+
+
+def disable_autoloader() -> None:
+    """Delete the game's config file to disable autoload."""
+    if CURRENT_GAME.config_path.exists():
+        delete_file(CURRENT_GAME.config_path)
+        messagebox.showinfo("Info", "Addons autoload disabled.")
+    else:
+        messagebox.showinfo("Info", f"No {CURRENT_GAME.config_name} file to delete.")
+
+
 def refresh_lists() -> None:
-    active, inactive, duplicates = scan_addons(ADDONS_DIR, DISABLED_DIR)
-    if duplicates:
-        messagebox.showerror("Error", f"Duplicates found: {', '.join(duplicates)}")
+    active, inactive = scan_addons(ADDONS_DIR, ADDONS_ENABLED_LIST)
 
     listbox_active.delete(0, tk.END)
     listbox_inactive.delete(0, tk.END)
@@ -97,24 +122,35 @@ def refresh_lists() -> None:
 def disable_addon() -> None:
     sel = listbox_active.curselection()
     if sel:
-        move_addon(listbox_active.get(sel[0]), ADDONS_DIR, DISABLED_DIR)
+        update_enabled_file(listbox_active.get(sel[0]), ADDONS_ENABLED_LIST)
         refresh_lists()
+        if CURRENT_GAME.config_path.exists():
+            update_config_file()
 
 
 def enable_addon() -> None:
     sel = listbox_inactive.curselection()
     if sel:
-        move_addon(listbox_inactive.get(sel[0]), DISABLED_DIR, ADDONS_DIR)
+        update_enabled_file(listbox_inactive.get(sel[0]), ADDONS_ENABLED_LIST)
         refresh_lists()
+        if CURRENT_GAME.config_path.exists():
+            update_config_file()
 
 
-def update_config_wrapper() -> None:
-    active, _, _ = scan_addons(ADDONS_DIR, DISABLED_DIR)
-    write_config(CURRENT_GAME, active)
-    messagebox.showinfo("Success", f"Enabled autoload for {len(active)} addons.")
+def update_config_file() -> None:
+    active_addons, _ = scan_addons(ADDONS_DIR, ADDONS_ENABLED_LIST)
+    write_autoload(CURRENT_GAME, active_addons)
 
 
 def check_for_update() -> None:
+    if CURRENT_GAME.version == "Undefined":
+        messagebox.showwarning(
+            "Too bad",
+            f"The update check function isn't available for {CURRENT_GAME.title} as we can't check the game version from exe.",
+        )
+
+        return
+
     remote_version = get_latest_github_release(
         CURRENT_GAME.github_user_name, CURRENT_GAME.github_repo_name
     ).replace("v", "")
@@ -154,7 +190,7 @@ def main() -> None:
     check_environment()
 
     root = tk.Tk()
-    root.title(f"Sanghelyos's {CURRENT_GAME.title} Toolbox")
+    root.title(f"Sanghelyos's Toolbox")
 
     icon_path = resource_path(ICON_FILE)
     if icon_path.exists():
@@ -185,7 +221,7 @@ def main() -> None:
     text.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Insert texts
-    text.insert("1.0", f"Welcome to Sanghelyos's {CURRENT_GAME.title} Toolbox!\n\n")
+    text.insert("1.0", "Welcome to Sanghelyos's Toolbox!\n\n")
     text.insert(
         "end",
         "This tool allows you to enable or disable addons for auto-loading.\n/!\ Disabled addons won't be able to be loaded from in-game loader.\n\n",
@@ -213,13 +249,13 @@ def main() -> None:
 
     tk.Button(
         addons_manager_tab,
-        text="Enable/Update autoloader",
-        command=update_config_wrapper,
+        text="Enable autoloader",
+        command=enable_autoloader,
     ).pack(pady=15)
     tk.Button(
         addons_manager_tab,
         text="Disable autoloader",
-        command=partial(disable_mods, CURRENT_GAME),
+        command=disable_autoloader,
     ).pack(pady=5)
 
     lists_frame = tk.Frame(addons_manager_tab)
@@ -260,8 +296,10 @@ def main() -> None:
 
     bottom_frame = tk.Frame(main_frame, relief="raised", bd=1)
     bottom_frame.pack(fill="x", side="bottom")
-    tk.Label(bottom_frame, text=f"Toolbox version: {APP_VERSION}").pack()
-    tk.Label(bottom_frame, text=f"Game version: {CURRENT_GAME.version}").pack()
+    tk.Label(bottom_frame, text=f"Toolbox version {APP_VERSION}").pack()
+    tk.Label(
+        bottom_frame, text=f"{CURRENT_GAME.title} version {CURRENT_GAME.version}"
+    ).pack()
 
     refresh_lists()
     root.mainloop()

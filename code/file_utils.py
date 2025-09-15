@@ -8,30 +8,33 @@ from game import Game
 from typing import List, Tuple, Optional
 
 
-def write_config(current_game: Game, active_addons: List[str]) -> None:
+def write_autoload(current_game: Game, active_addons: List[str]) -> None:
     """Write active addons to the game's config file."""
     with current_game.config_path.open("w", encoding="utf-8") as f:
         for addon in active_addons:
             f.write(f"addfile addons\\{addon}\n")
 
 
-def disable_mods(current_game: Game) -> None:
-    """Delete the game's config file to disable autoload."""
-    if current_game.config_path.exists():
-        current_game.config_path.unlink()
-        messagebox.showinfo("Info", "Addons autoload disabled.")
-    else:
-        messagebox.showinfo("Info", f"No {current_game.config_name} file to delete.")
+def delete_file(path: Path) -> None:
+    path.unlink()
 
 
-def move_addon(addon: str, source: Path, dest: Path) -> None:
-    """Move an addon from source folder to destination folder."""
-    src_path = source / addon
-    dest_path = dest / addon
-    if src_path.exists():
-        shutil.move(str(src_path), str(dest_path))
+def update_enabled_file(addon: str, addons_enabled_list_path: Path) -> None:
+    """Updates enabled addons list."""
+    with addons_enabled_list_path.open("r", encoding="utf-8") as f:
+        lines = [line.strip() for line in f]
+
+    if addon in lines:
+        # Remove it
+        lines = [line for line in lines if line != addon]
     else:
-        messagebox.showerror("Error", f"Cannot move {addon}!")
+        # Add it
+        lines.append(addon)
+
+    # Save back
+    with addons_enabled_list_path.open("w", encoding="utf-8") as f:
+        for line in lines:
+            f.write(line + "\n")
 
 
 def backup_save(current_game: Game, save_backup_dir: Path) -> None:
@@ -76,18 +79,25 @@ def get_file_version(path: Path) -> Optional[str]:
 
 
 def scan_addons(
-    addons_dir: Path, disabled_dir: Path
+    addons_dir: Path, addons_enabled_file_path: Path
 ) -> Tuple[List[str], List[str], List[str]]:
-    """Return active, inactive addons, and list of duplicates."""
-    active = (
-        [f.name for f in addons_dir.iterdir() if f.is_file()]
+    """Return active and inactive addons."""
+    addons = (
+        [
+            f.name
+            for f in addons_dir.iterdir()
+            if f.is_file() and not f.name.endswith(".txt")
+        ]
         if addons_dir.exists()
         else []
     )
-    inactive = (
-        [f.name for f in disabled_dir.iterdir() if f.is_file()]
-        if disabled_dir.exists()
-        else []
-    )
-    duplicates = list(set(active) & set(inactive))
-    return active, inactive, duplicates
+    with addons_enabled_file_path.open("r", encoding="utf-8") as f:
+        active_list = [line.strip() for line in f]
+
+    all_addons = set(addons)
+    active_addons = set(active_list)
+
+    active = list(all_addons & active_addons)
+    inactive = list(all_addons - active_addons)
+
+    return active, inactive
