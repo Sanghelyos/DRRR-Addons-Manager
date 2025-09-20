@@ -4,12 +4,14 @@ from dataclasses import dataclass
 
 @dataclass
 class Game:
+    key: str
     exe_name: str
     config_name: str
     title: str
     save_files: list
     dir: Path
     version: None | str
+    github_asset_name: None | str
     github_user_name: str
     github_repo_name: str
 

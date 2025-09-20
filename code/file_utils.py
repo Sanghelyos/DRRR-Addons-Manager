@@ -5,15 +5,15 @@ from datetime import datetime
 import sys
 import pefile
 from game import Game
+from github_utils import download_file
 from typing import List, Tuple, Optional
-
+import subprocess
 
 def write_autoload(current_game: Game, active_addons: List[str]) -> None:
     """Write active addons to the game's config file."""
     with current_game.config_path.open("w", encoding="utf-8") as f:
         for addon in active_addons:
             f.write(f"addfile addons\\{addon}\n")
-
 
 def delete_file(path: Path) -> None:
     path.unlink()
@@ -101,3 +101,13 @@ def scan_addons(
     inactive = list(all_addons - active_addons)
 
     return active, inactive
+
+def install_game_update(asset_url: str, installer_download_path: Path, asset_name: str) -> None:
+    installer_download_path.mkdir(parents=True, exist_ok=True)
+    file_path = installer_download_path / asset_name
+    download_file(asset_url, file_path)
+    process = subprocess.run([file_path])
+    file_path.unlink()
+    installer_download_path.rmdir()
+
+    return process.returncode

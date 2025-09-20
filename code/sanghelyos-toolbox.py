@@ -7,9 +7,9 @@ from pathlib import Path
 
 from game import Game
 from file_utils import *
-from github_utils import get_latest_github_release, open_latest_build_webpage
+from github_utils import *
 
-APP_VERSION = "1.3"
+APP_VERSION = "1.4"
 
 # Directories
 BASE_DIR = (
@@ -20,6 +20,7 @@ BASE_DIR = (
 ADDONS_DIR = BASE_DIR / "addons"
 ADDONS_ENABLED_LIST = ADDONS_DIR / "enabled.txt"
 SAVE_BACKUPS_DIR = BASE_DIR / "save_backups"
+INSTALLER_DOWNLOAD_PATH = BASE_DIR / "installer_files"
 ICON_FILE = Path("assets/icon.ico")
 
 GAMES = {
@@ -31,6 +32,7 @@ GAMES = {
         ["ringdata.dat", "ringprofiles.prf", "srvstats.dat"],
         BASE_DIR,
         None,
+        "Dr.Robotnik.s-Ring-Racers-VERSIONTAG-Installer.exe",
         "KartKrewDev",
         "RingRacers",
     ),
@@ -41,6 +43,7 @@ GAMES = {
         "Sonic Robo Blast 2 Kart",
         ["kartdata.dat"],
         BASE_DIR,
+        None,
         None,
         "STJr",
         "Kart-Public",
@@ -81,7 +84,7 @@ def check_environment() -> None:
 
     if CURRENT_GAME.key in ["srb2kart"]:
         CURRENT_GAME.version = "Undefined"
-
+    
 
 # ------------------ GUI Logic ------------------
 
@@ -173,13 +176,24 @@ def check_for_update() -> None:
 
     answer = messagebox.askyesno(
         "Update Available!",
-        f"You are missing updates. Last version is {remote_version}\n\nDo you want to visit the official latest build page?",
+        f"You are missing updates. Last version is {remote_version}\n\nDo you want install the latest version?",
     )
     if answer:
-        open_latest_build_webpage(
-            CURRENT_GAME.github_user_name, CURRENT_GAME.github_repo_name
-        )
+        update_game_files()
 
+def update_game_files() -> None:
+    asset_url = get_release_asset_url(CURRENT_GAME.github_user_name, CURRENT_GAME.github_repo_name, CURRENT_GAME.github_asset_name)
+    return_code = install_game_update(asset_url, INSTALLER_DOWNLOAD_PATH, CURRENT_GAME.github_asset_name)
+
+    match return_code:
+        case 0:
+            messagebox.showinfo("Info", "Installation successfull!")
+        case 1 | 255:
+            messagebox.showinfo("Info", "Installation cancelled!")
+        case _:
+             messagebox.showerror("Error", f"Unknown process error {return_code}")
+    
+    check_environment()
 
 # ------------------ Main ------------------
 
