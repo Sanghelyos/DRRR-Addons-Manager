@@ -19,4 +19,4 @@ Latest version [download](https://github.com/Sanghelyos/dr-robotnik-ring-racers-
 - All the files from your addons folder should appear in the left column. A folder will be created if it doesn't exists.
 - To disable an addon, just move it inside the right column.
 - To enable or update the autoloading feature, click "Enable/Update autoloader".
-- Clicking "Disable autoloader" will prevent the addons to be loaded on launch. But all enabled addons will remain in the addons folder and be anble to be enabled from the in game loader.
+- Clicking "Disable autoloader" will prevent the addons to be loaded on launch. But all addons will remain in the addons folder and be able to be enabled from the in game loader.
